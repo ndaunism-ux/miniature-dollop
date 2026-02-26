@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Decisiones de Nación: Colombia Siglo XIX</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1b1b1b;
+      color: #f4e4c1;
+      font-family: "Courier New", monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .game-container {
+      width: 960px;
+      height: 540px;
+      background: #2b1b10;
+      border: 8px solid #000;
+      image-rendering: pixelated;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+      position: relative;
+      padding: 8px;
+    }
+
+    .frame {
+      border: 4px solid #000;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(#3b2615, #2a1a0f);
+      position: relative;
+      padding: 8px;
+    }
+
+    /* Top HUD */
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .bars {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 260px;
+    }
+
+    .bar-label {
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .bar {
+      width: 100%;
+      height: 14px;
+      border: 2px solid #000;
+      background: #4a2a1a;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: #2ecc71;
+      width: 50%;
+      transition: width 0.3s;
+    }
+
+    .bar-fill.stability {
+      background: #3498db;
+    }
+
+    .bar-text {
+      position: absolute;
+      top: -16px;
+      right: 2px;
+      font-size: 10px;
+    }
+
+    .stars {
+      font-size: 14px;
+      text-align: right;
+      width: 200px;
+    }
+
+    .stars span {
+      color: #f1c40f;
+    }
+
+    /* Scene */
+    .scene {
+      border: 4px solid #000;
+      background:
+        linear-gradient(#5b3b24 40%, #2b1b10 40%) no-repeat;
+      background-size: 100% 100%;
+      height: calc(100% - 60px);
+      position: relative;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Window / background city */
+    .window {
+      width: 60%;
+      height: 40%;
+      margin: 0 auto;
+      border: 4px solid #000;
+      background:
+        repeating-linear-gradient(
+          to right,
+          #3b5b7b 0,
+          #3b5b7b 4px,
+          #2b3b5b 4px,
+          #2b3b5b 8px
+        );
+      position: relative;
+    }
+
+    .window::before {
+      content: "";
+      position: absolute;
+      left: 10%;
+      bottom: 10%;
+      width: 20%;
+      height: 20%;
+      background: #c9b07a; /* edificio */
+    }
+
+    .window::after {
+      content: "";
+      position: absolute;
+      right: 15%;
+      bottom: 15%;
+      width: 10%;
+      height: 30%;
+      background: #8b5a2b; /* torre */
+    }
+
+    /* Desk */
+    .desk {
+      width: 90%;
+      height: 26%;
+      margin: 0 auto;
+      border: 4px solid #000;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          #5b3b24 0,
+          #5b3b24 4px,
+          #4a2f1c 4px,
+          #4a2f1c 8px
+        );
+      position: relative;
+    }
+
+    .desk::before {
+      content: "";
+      position: absolute;
+      left: 10%;
+      top: 20%;
+      width: 20%;
+      height: 20%;
+      background: #d9d0b0; /* papeles */
+      border: 2px solid #000;
+    }
+
+    .desk::after {
+      content: "";
+      position: absolute;
+      right: 15%;
+      top: 25%;
+      width: 6%;
+      height: 30%;
+      background: #222;
+      border-radius: 50%;
+      border: 2px solid #000; /* tintero */
+    }
+
+    /* Characters */
+    .characters {
+      position: absolute;
+      bottom: 26%;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 40px;
+      pointer-events: none;
+    }
+
+    .character {
+      width: 120px;
+      height: 120px;
+      border: 4px solid #000;
+      background: #3b2615;
+      position: relative;
+    }
+
+    .character.zonc {
+      background:
+        linear-gradient(#f4e4c1 40%, #2b3b7b 40%); /* cara + chaleco azul */
+    }
+
+    .character.confucio {
+      background:
+        linear-gradient(#f4e4c1 40%, #7b1b1b 40%); /* cara + capa roja */
+    }
+
+    .character::before {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 25%;
+      width: 50%;
+      height: 30%;
+      background: #f4e4c1; /* cabeza */
+      border: 3px solid #000;
+    }
+
+    .character::after {
+      content: "";
+      position: absolute;
+      top: 45%;
+      left: 20%;
+      width: 60%;
+      height: 45%;
+      border: 3px solid #000; /* torso */
+    }
+
+    .character.zonc::after {
+      background: #2b3b7b;
+    }
+
+    .character.confucio::after {
+      background: #7b1b1b;
+    }
+
+    /* Dialogue + choices */
+    .dialogue-box {
+      border: 4px solid #000;
+      background: #1b0f08;
+      padding: 8px;
+      font-size: 14px;
+      min-height: 80px;
+      margin-bottom: 6px;
+    }
+
+    .dialogue-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .propaganda {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .propaganda-block {
+      width: 48%;
+      border: 2px solid #000;
+      padding: 4px;
+      background: #2b1b10;
+    }
+
+    .choices {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .choice-btn {
+      flex: 1;
+      border: 3px solid #000;
+      background: #4a2f1c;
+      color: #f4e4c1;
+      padding: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .choice-btn:hover {
+      background: #6b3f24;
+      transform: translateY(-1px);
+    }
+
+    .choice-btn.liberal {
+      border-color: #2ecc71;
+    }
+
+    .choice-btn.conservador {
+      border-color: #e74c3c;
+    }
+
+    .centered {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 16px;
+    }
+
+    .btn-main {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 12px;
+      border: 3px solid #000;
+      background: #4a2f1c;
+      color: #f4e4c1;
+      cursor: pointer;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .btn-main:hover {
+      background: #6b3f24;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="frame">
+      <div class="hud">
+        <div class="bars">
+          <div>
+            <div class="bar-label">Popularidad dentro del partido</div>
+            <div class="bar">
+              <div class="bar-fill popularity" id="popularityFill"></div>
+              <div class="bar-text" id="popularityText">50%</div>
+            </div>
+          </div>
+          <div>
+            <div class="bar-label">Estabilidad del país</div>
+            <div class="bar">
+              <div class="bar-fill stability" id="stabilityFill"></div>
+              <div class="bar-text" id="stabilityText">50%</div>
+            </div>
+          </div>
+        </div>
+        <div class="stars">
+          Estrellas: <span id="starsDisplay">0</span> / 10
+        </div>
+      </div>
+
+      <div class="scene">
+        <div class="window"></div>
+        <div class="desk"></div>
+
+        <div class="characters">
+          <div class="character zonc"></div>
+          <div class="character confucio"></div>
+        </div>
+
+        <div class="dialogue-box" id="dialogueBox">
+          <!-- Contenido dinámico -->
+        </div>
+
+        <div class="choices" id="choicesBox">
+          <!-- Botones dinámicos -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Estado del juego ---
+    let chosenIdeology = null; // "liberal" o "conservador"
+    let popularity = 50;
+    let stability = 50;
+    let stars = 0;
+    let correctStreak = 0;
+    let wrongStreak = 0;
+
+    const popularityFill = document.getElementById("popularityFill");
+    const stabilityFill = document.getElementById("stabilityFill");
+    const popularityText = document.getElementById("popularityText");
+    const stabilityText = document.getElementById("stabilityText");
+    const starsDisplay = document.getElementById("starsDisplay");
+    const dialogueBox = document.getElementById("dialogueBox");
+    const choicesBox = document.getElementById("choicesBox");
+
+    // --- Eventos históricos ---
+    const events = [
+      {
+        title: "Ley de Libertad de Vientres (1821)",
+        description:
+          "Se debate si los hijos de personas esclavizadas deben nacer libres en la nueva república.",
+        liberalOption: "Aprobar la ley: los hijos de esclavizados nacerán libres.",
+        conservativeOption:
+          "Mantener el sistema esclavista para proteger la economía tradicional.",
+        zoncLine:
+          "¡Libertad para todos! ¡Si seguimos así, pronto tendremos hasta universidades para zorros!",
+        confucioLine:
+          "¡Cambios tan bruscos pueden desestabilizar la república más rápido que un cóndor en picada!"
+      },
+      {
+        title: "Federalismo vs. Centralismo",
+        description:
+          "Las provincias discuten si deben tener más autonomía frente al gobierno central.",
+        liberalOption:
+          "Apoyar el federalismo: más autonomía para las provincias.",
+        conservativeOption:
+          "Defender el centralismo: un gobierno fuerte desde la capital.",
+        zoncLine:
+          "¡Autonomía para todos! ¡Así cada región puede inventar su propio himno y su propio sancocho!",
+        confucioLine:
+          "¡Un solo centro, un solo orden! ¡Demasiada libertad y terminamos con veinte constituciones distintas!"
+      },
+      {
+        title: "Educación pública laica (1870)",
+        description:
+          "Se propone separar la educación de la Iglesia y crear escuelas públicas laicas.",
+        liberalOption:
+          "Impulsar la educación laica y pública para toda la población.",
+        conservativeOption:
+          "Mantener la educación en manos de la Iglesia para preservar la moral.",
+        zoncLine:
+          "¡Escuelas para todos! ¡Niños aprendiendo ciencia sin miedo a que los regañe un cura!",
+        confucioLine:
+          "¡La moral se aprende con disciplina! ¡Sin la Iglesia, los estudiantes se perderán!"
+      },
+      {
+        title: "Libertad de prensa",
+        description:
+          "Se discute si se debe permitir la existencia de periódicos opositores al gobierno.",
+        liberalOption:
+          "Permitir libertad total de prensa, incluso para la oposición.",
+        conservativeOption:
+          "Controlar la prensa para evitar críticas que generen caos.",
+        zoncLine:
+          "¡Deja que hablen! ¡Hasta yo quiero publicar mi propio periódico: 'El Zorro Ilustrado'!",
+        confucioLine:
+          "¡Demasiadas voces confunden al pueblo! ¡Un país estable no necesita cuarenta periódicos criticando todo!"
+      },
+      {
+        title: "La Regeneración y la Constitución de 1886",
+        description:
+          "Se propone fortalecer el Estado central y la influencia de la Iglesia.",
+        liberalOption:
+          "Defender el modelo federal y laico, evitando retrocesos.",
+        conservativeOption:
+          "Apoyar la Regeneración y una constitución centralista y confesional.",
+        zoncLine:
+          "¡No retrocedamos! ¡Si seguimos así, volveremos a escribir leyes con pluma de cóndor!",
+        confucioLine:
+          "¡Orden y tradición! ¡La patria necesita alas fuertes, no experimentos liberales!"
+      }
+    ];
+
+    let currentEventIndex = 0;
+
+    // --- Utilidades ---
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateHUD() {
+      popularity = clamp(popularity, 0, 100);
+      stability = clamp(stability, 0, 100);
+
+      popularityFill.style.width = popularity + "%";
+      stabilityFill.style.width = stability + "%";
+      popularityText.textContent = popularity + "%";
+      stabilityText.textContent = stability + "%";
+      starsDisplay.textContent = stars;
+    }
+
+    function checkLoseConditions() {
+      if (popularity <= 0 || stability <= 0) {
+        showEndScreen(false, "Las barras llegaron a 0%. La nación ha caído en crisis.");
+        return true;
+      }
+      if (stars < 0) {
+        showEndScreen(false, "Te quedaste sin estrellas. Has perdido el apoyo necesario.");
+        return true;
+      }
+      return false;
+    }
+
+    function checkWinCondition() {
+      if (stars >= 10) {
+        showEndScreen(true, "¡Has alcanzado 10 estrellas y guiado a la nación con tu ideología!");
+        return true;
+      }
+      return false;
+    }
+
+    function nextEvent() {
+      currentEventIndex++;
+      if (currentEventIndex >= events.length) {
+        // Si se acaban los eventos, se reinician en bucle
+        currentEventIndex = 0;
+      }
+      renderEvent();
+    }
+
+    // --- Renderizado ---
+    function renderIntro() {
+      dialogueBox.innerHTML = `
+        <div class="dialogue-title">Decisiones de Nación: Colombia Siglo XIX</div>
+        <p>Eres el presidente de la República en el siglo XIX. Dos figuras políticas muy particulares quieren convencerte:</p>
+        <p><strong>Zonc el Zorro</strong>, liberal, rápido y sarcástico.</p>
+        <p><strong>Confucio el Cóndor</strong>, conservador, solemne y dramático.</p>
+        <div class="propaganda">
+          <div class="propaganda-block">
+            <strong>Zonc el Zorro:</strong><br>
+            "¡Únete a los liberales! ¡Somos tan modernos que pronto inventaremos el WiFi republicano!"
+          </div>
+          <div class="propaganda-block">
+            <strong>Confucio el Cóndor:</strong><br>
+            "¡El orden conservador es tan fuerte que ni un terremoto podría moverlo!"
+          </div>
+        </div>
+        <p class="centered">Elige tu ideología para comenzar.</p>
+      `;
+
+      choicesBox.innerHTML = `
+        <button class="choice-btn liberal" onclick="chooseIdeology('liberal')">
+          Ser liberal – Zonc el Zorro
+        </button>
+        <button class="choice-btn conservador" onclick="chooseIdeology('conservador')">
+          Ser conservador – Confucio el Cóndor
+        </button>
+      `;
+    }
+
+    function renderEvent() {
+      const ev = events[currentEventIndex];
+
+      dialogueBox.innerHTML = `
+        <div class="dialogue-title">${ev.title}</div>
+        <p>${ev.description}</p>
+        <div class="propaganda">
+          <div class="propaganda-block">
+            <strong>Zonc el Zorro:</strong><br>
+            "${ev.zoncLine}"
+          </div>
+          <div class="propaganda-block">
+            <strong>Confucio el Cóndor:</strong><br>
+            "${ev.confucioLine}"
+          </div>
+        </div>
+      `;
+
+      choicesBox.innerHTML = `
+        <button class="choice-btn liberal" onclick="makeChoice('liberal')">
+          Opción liberal:<br>${ev.liberalOption}
+        </button>
+        <button class="choice-btn conservador" onclick="makeChoice('conservador')">
+          Opción conservadora:<br>${ev.conservativeOption}
+        </button>
+      `;
+    }
+
+    function showEndScreen(won, message) {
+      dialogueBox.innerHTML = `
+        <div class="dialogue-title">${won ? "¡Victoria!" : "Derrota"}</div>
+        <p>${message}</p>
+        <p class="centered">
+          Popularidad final: ${popularity}%<br>
+          Estabilidad final: ${stability}%<br>
+          Estrellas: ${stars}
+        </p>
+      `;
+      choicesBox.innerHTML = `
+        <button class="btn-main" onclick="restartGame()">
+          Volver a jugar
+        </button>
+      `;
+    }
+
+    function restartGame() {
+      chosenIdeology = null;
+      popularity = 50;
+      stability = 50;
+      stars = 0;
+      correctStreak = 0;
+      wrongStreak = 0;
+      currentEventIndex = 0;
+      updateHUD();
+      renderIntro();
+    }
+
+    // --- Lógica de decisiones ---
+    window.chooseIdeology = function(ideology) {
+      chosenIdeology = ideology;
+      currentEventIndex = 0;
+      correctStreak = 0;
+      wrongStreak = 0;
+      renderEvent();
+    };
+
+    window.makeChoice = function(choiceIdeology) {
+      if (!chosenIdeology) return;
+
+      const isCorrect = (choiceIdeology === chosenIdeology);
+
+      if (isCorrect) {
+        popularity += 30;
+        stability += 5;
+        correctStreak++;
+        wrongStreak = 0;
+
+        if (correctStreak >= 5) {
+          stars++;
+          correctStreak = 0;
+        }
+      } else {
+        popularity -= 15;
+        stability -= 25;
+        wrongStreak++;
+        correctStreak = 0;
+
+        if (wrongStreak >= 2) {
+          if (stars > 0) {
+            stars--;
+          } else {
+            // Sin estrellas para perder: derrota
+            stars--;
+          }
+          wrongStreak = 0;
+        }
+      }
+
+      updateHUD();
+
+      if (checkLoseConditions()) return;
+      if (checkWinCondition()) return;
+
+      nextEvent();
+    };
+
+    // Inicializar
+    updateHUD();
+    renderIntro();
+  </script>
+</body>
+</html>
